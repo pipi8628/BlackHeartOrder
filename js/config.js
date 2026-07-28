@@ -1,5 +1,5 @@
 window.BLACK_HEART_CONFIG = {
-  LIFF_ID: "",
+  LIFF_ID: "2010881176-MO4EUkEl",
   STORE: {
     isOpen: true,
     statusText: "今日營業中",
