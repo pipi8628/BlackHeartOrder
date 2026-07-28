@@ -1,18 +1,22 @@
-# BlackHeartOrder V1 商品菜單版
+# BlackHeartOrder V1.2
 
-已完成：品牌首頁、LINE LIFF 登入入口、POS JSON 商品讀取、地瓜球雙口味最高價規則、飲料尺寸/甜度/冰量/加料、購物車、圖片欄位預留。
+可直接部署到 GitHub Pages 的前端測試版。
 
-## 上傳 GitHub Pages
-將本資料夾全部檔案覆蓋到 `BlackHeartOrder` repo 根目錄。
+## 已完成
+- 讀取 POS 匯出的 products.json
+- 自動隱藏「老闆招待」與「隱藏版」
+- 地瓜球整合為單一商品
+- 最多選兩種口味，價格取最高價
+- 飲料尺寸／甜度／冰量／加料
+- 購物車增減、刪除、編輯
+- 購物車自動保留在瀏覽器
+- 取餐姓名、電話、時間與備註
+- 建立並複製測試訂單內容
 
-## LINE Login
-將 LIFF ID 填入 `js/config.js` 的 `LIFF_ID`。
+## 尚未完成
+- 正式 LINE Login 設定（需填入 LIFF ID）
+- 訂單 API
+- POS 自動接單與列印
 
-## 商品更新
-POS 匯出後，把 JSON 改名為 `products.json` 覆蓋即可。
-
-## 本版規則
-- 地瓜球最多 2 種口味。
-- 價格取所選口味最高價，不累加。
-- `老闆招待`、`隱藏版` 不顯示在線上點餐。
-- 尚未串接正式送單 API。
+## 部署
+將壓縮檔內全部檔案放在 GitHub repo 根目錄，不要多包一層資料夾。
