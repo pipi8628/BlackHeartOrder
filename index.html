@@ -2,8 +2,8 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#111111">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0d0d0d">
   <meta name="description" content="黑心地瓜球線上預訂">
   <title>黑心地瓜球｜線上預訂</title>
   <link rel="stylesheet" href="./css/style.css">
@@ -12,48 +12,67 @@
 <body>
   <main class="app-shell">
     <header class="hero">
-      <div class="brand-mark">🍠</div>
+      <div class="brand-mark" aria-hidden="true">🍠</div>
       <p class="eyebrow">BLACK HEART</p>
       <h1>黑心地瓜球</h1>
-      <p class="subtitle">現炸地瓜球・飲料線上預訂</p>
+      <p class="subtitle">審計新村・線上預訂</p>
+      <div class="brand-copy" aria-label="品牌介紹">
+        <p>🍠 現點現炸，請耐心等候美味出爐。</p>
+        <p>🔥 每一份皆為現炸，預估等候約 10–12 分鐘。</p>
+        <p>🖤 招牌黑色外皮，外酥內 Q，每一口都是現炸的美味。</p>
+        <p>❤️ 感謝您的耐心等候，讓我們為您炸出最好吃的地瓜球。</p>
+      </div>
     </header>
 
     <section class="status-card" aria-live="polite">
-      <div class="status-row"><span class="status-dot"></span><strong id="storeStatus">今日營業中</strong></div>
-      <div class="wait-time"><span>目前預估等待</span><strong id="waitMinutes">約 10 分鐘</strong></div>
+      <div class="status-row"><span id="statusDot" class="status-dot"></span><strong id="storeStatus">今日營業中</strong></div>
+      <div class="wait-time"><span>目前預估等待</span><strong id="waitMinutes">約 10–12 分鐘</strong></div>
       <p id="storeNotice">送出訂單後，需等店家確認才算成立。</p>
     </section>
 
     <section id="loginPanel" class="login-card">
-      <div>
-        <p class="section-label">開始點餐前</p>
-        <h2>請先使用 LINE 登入</h2>
-        <p>登入後才能送出訂單，可降低惡意或重複下單。</p>
-      </div>
+      <div><p class="section-label">開始點餐前</p><h2>請先使用 LINE 登入</h2><p>登入後才能送出訂單，可降低惡意或重複下單。</p></div>
       <button id="lineLoginBtn" class="primary-btn" type="button">使用 LINE 登入</button>
-      <p id="loginHint" class="hint">目前為測試頁，完成 LIFF 設定後即可正式登入。</p>
+      <button id="previewBtn" class="ghost-btn" type="button">先預覽菜單</button>
+      <p id="loginHint" class="hint">目前可先預覽；正式送單仍需 LINE 登入。</p>
     </section>
 
     <section id="memberPanel" class="member-card hidden">
-      <div class="member-main">
-        <img id="memberPicture" class="avatar" alt="LINE 頭像">
-        <div><p class="section-label">歡迎回來</p><h2 id="memberName">LINE 使用者</h2></div>
-      </div>
+      <div class="member-main"><img id="memberPicture" class="avatar" alt="LINE 頭像"><div><p class="section-label">歡迎回來</p><h2 id="memberName">LINE 使用者</h2></div></div>
       <button id="startOrderBtn" class="primary-btn" type="button">開始點餐</button>
     </section>
 
-    <section class="menu-preview">
-      <p class="section-label">第一階段開放</p>
-      <div class="menu-grid">
-        <article class="menu-tile"><div class="tile-icon">🍠</div><h3>地瓜球</h3><p>口味、辣度與附加選項</p></article>
-        <article class="menu-tile"><div class="tile-icon">🥤</div><h3>飲料</h3><p>尺寸、甜度、冰量與加料</p></article>
-      </div>
+    <section id="menuSection" class="menu-section hidden">
+      <div class="menu-heading"><div><p class="section-label">MENU</p><h2>選擇餐點</h2></div><span id="catalogMeta" class="catalog-meta"></span></div>
+      <nav id="categoryTabs" class="category-tabs" aria-label="商品分類"></nav>
+      <div id="productList" class="product-list"></div>
     </section>
 
     <footer><p>台中西區・審計新村商圈</p><p class="fine-print">未經店家確認之訂單不成立。</p></footer>
   </main>
+
+  <button id="cartBar" class="cart-bar hidden" type="button"><span><b id="cartCount">0</b> 項餐點</span><strong id="cartTotal">NT$0</strong><em>查看購物車</em></button>
+
+  <div id="productModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-backdrop" data-close-modal></div>
+    <section class="modal-sheet">
+      <div class="sheet-handle"></div>
+      <button class="modal-close" type="button" data-close-modal aria-label="關閉">×</button>
+      <div id="modalContent"></div>
+    </section>
+  </div>
+
+  <div id="cartModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="cartTitle">
+    <div class="modal-backdrop" data-close-cart></div>
+    <section class="modal-sheet cart-sheet">
+      <div class="sheet-handle"></div><button class="modal-close" type="button" data-close-cart aria-label="關閉">×</button>
+      <h2 id="cartTitle">購物車</h2><div id="cartItems"></div>
+      <div class="cart-summary"><span>合計</span><strong id="cartModalTotal">NT$0</strong></div>
+      <button id="checkoutBtn" class="primary-btn" type="button">確認訂單</button>
+      <p class="hint">送出後仍需店家確認，訂單才算成立。</p>
+    </section>
+  </div>
+
   <div id="toast" class="toast hidden" role="status"></div>
-  <script src="./js/config.js"></script>
-  <script src="./js/app.js"></script>
-</body>
-</html>
+  <script src="./js/config.js"></script><script src="./js/app.js"></script>
+</body></html>
