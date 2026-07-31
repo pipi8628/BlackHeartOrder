@@ -42,6 +42,15 @@
       <button id="startOrderBtn" class="primary-btn" type="button">開始點餐</button>
     </section>
 
+    <section id="testControls" class="test-controls" aria-label="接單狀態測試開關">
+      <div><p class="section-label">TEST MODE</p><h2>分類接單測試</h2><p>目前尚未連接 POS，可先切換三類狀態確認前台畫面與購物車阻擋。</p></div>
+      <div class="test-switch-grid">
+        <label><span>🍠 地瓜球</span><input id="testBalls" type="checkbox"><i></i></label>
+        <label><span>🥤 飲料</span><input id="testDrinks" type="checkbox"><i></i></label>
+        <label><span>🍱 餐點</span><input id="testMeals" type="checkbox"><i></i></label>
+      </div>
+    </section>
+
     <section id="menuSection" class="menu-section hidden">
       <div class="menu-heading"><div><p class="section-label">MENU</p><h2>選擇餐點</h2></div><span id="catalogMeta" class="catalog-meta"></span></div>
       <nav id="categoryTabs" class="category-tabs" aria-label="商品分類"></nav>
