@@ -6,7 +6,7 @@ window.BLACK_HEART_CONFIG={
 
   // POS 狀態 API：填入 Apps Script / 其他後端的公開 GET 網址。
   // 留空時會使用下方測試開關；填入後網頁每 10 秒自動同步。
-  POS_STATUS_URL:"https://script.google.com/macros/s/AKfycbx__WlzQPk_MDfwvV1HMiDnhVnx9-cVfkyitrT74pSKgoGQALE7xj-5v5NVFp3aQznN/exec?api=order_status",
+  POS_STATUS_URL:"https://script.google.com/macros/s/AKfycby10ESbwBKuVICp1X2lWBY1RVRnduf0DxEGMkof19zC-leFEx-_-mZE7IRt3ckbQRxV/exec?api=order_status",
   POS_STATUS_POLL_MS:10000,
   ENABLE_TEST_SWITCHES:false,
 
