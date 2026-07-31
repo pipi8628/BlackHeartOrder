@@ -56,7 +56,7 @@
     },
     {
       "category_id": "drink_bf63e2d0a3ac8850",
-      "name": "黑糖\/其他",
+      "name": "黑糖/其他",
       "enabled": true,
       "sort_order": 60
     }
@@ -144,7 +144,39 @@
       "sort_order": 50,
       "category_name": "地瓜球",
       "variants": [],
-      "option_groups": []
+      "option_groups": [
+        {
+          "option_group_id": "spicy_level_qinghuajiao",
+          "name": "辣度",
+          "required": true,
+          "min_select": 1,
+          "max_select": 1,
+          "sort_order": 10,
+          "items": [
+            {
+              "option_item_id": "spicy_normal",
+              "name": "正常辣",
+              "price_delta": 0,
+              "enabled": true,
+              "sort_order": 10
+            },
+            {
+              "option_item_id": "spicy_medium",
+              "name": "中辣",
+              "price_delta": 0,
+              "enabled": true,
+              "sort_order": 20
+            },
+            {
+              "option_item_id": "spicy_hot",
+              "name": "大辣",
+              "price_delta": 0,
+              "enabled": true,
+              "sort_order": 30
+            }
+          ]
+        }
+      ]
     },
     {
       "product_id": "ball_bb3221cffdef4148",
@@ -3277,7 +3309,7 @@
       "hot": false,
       "enabled": true,
       "sort_order": 500,
-      "category_name": "黑糖\/其他",
+      "category_name": "黑糖/其他",
       "variants": [],
       "option_groups": [
         {
@@ -3375,7 +3407,7 @@
       "hot": false,
       "enabled": true,
       "sort_order": 510,
-      "category_name": "黑糖\/其他",
+      "category_name": "黑糖/其他",
       "variants": [],
       "option_groups": [
         {
@@ -3473,7 +3505,7 @@
       "hot": false,
       "enabled": true,
       "sort_order": 520,
-      "category_name": "黑糖\/其他",
+      "category_name": "黑糖/其他",
       "variants": [],
       "option_groups": [
         {
@@ -3571,7 +3603,7 @@
       "hot": false,
       "enabled": true,
       "sort_order": 530,
-      "category_name": "黑糖\/其他",
+      "category_name": "黑糖/其他",
       "variants": [],
       "option_groups": [
         {
@@ -3669,7 +3701,7 @@
       "hot": false,
       "enabled": true,
       "sort_order": 540,
-      "category_name": "黑糖\/其他",
+      "category_name": "黑糖/其他",
       "variants": [
         {
           "variant_id": "drink_733187b01c1a326f_custom_705369305",

@@ -32,3 +32,7 @@
 - `js/config.js` 已預留 `ORDER_STATUS`、`POS_STATUS_URL` 欄位。
 - 測試期間可使用頁面上的三個開關；狀態會保存在瀏覽器 localStorage。
 - 正式接 POS 後可將 `ENABLE_TEST_SWITCHES` 改為 `false` 隱藏測試區。
+
+
+## V1.4.1
+- 修正青花椒鹽粉缺少辣度選項：正常辣／中辣／大辣（必選，預設正常辣）。
