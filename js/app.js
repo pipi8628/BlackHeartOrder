@@ -94,8 +94,25 @@ function showMenu(){el.menuSection.classList.remove("hidden");setTimeout(()=>el.
 function buildPickupTimes(){const now=new Date(),step=15,minLead=15,start=new Date(now.getTime()+minLead*60000);start.setMinutes(Math.ceil(start.getMinutes()/step)*step,0,0);const opts=[];for(let i=0;i<16;i++){const d=new Date(start.getTime()+i*step*60000);opts.push(`<option value="${d.toISOString()}">${d.toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit",hour12:false})}</option>`)}el.pickupTime.innerHTML=opts.join("")}
 async function openCheckout(){if(!state.cart.length)return toast("購物車是空的");await refreshPosStatus(true);const blocked=validateCartAvailability();if(blocked.length)return toast(`${blocked.map(categoryName).join("、")}已停止接單，請先移除相關商品`);closeCart();buildPickupTimes();if(state.profile&&!el.customerName.value)el.customerName.value=state.profile.displayName||"";renderCart();showModal(el.checkoutModal)}
 function normalizePhone(v){return String(v||"").replace(/[\s-]/g,"")}
-async function submitTestOrder(e){e.preventDefault();const name=el.customerName.value.trim(),phone=normalizePhone(el.customerPhone.value);if(!name)return toast("請輸入取餐姓名");if(!/^09\d{8}$/.test(phone))return toast("請輸入正確的手機號碼");if(!state.cart.length)return toast("購物車是空的");await refreshPosStatus(true);const blocked=validateCartAvailability();if(blocked.length)return toast(`${blocked.map(categoryName).join("、")}已停止接單，訂單無法送出`);const pickup=new Date(el.pickupTime.value);const orderNo=`BH${new Date().toISOString().replace(/\D/g,"").slice(2,14)}`;const lines=[`【黑心地瓜球｜測試訂單】`,`訂單編號：${orderNo}`,`取餐姓名：${name}`,`電話：${phone}`,`取餐時間：${pickup.toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit",hour12:false})}`,"",...state.cart.flatMap((x,i)=>[`${i+1}. ${x.name} ×${x.qty}　${money(x.unit*x.qty)}`,...x.detail.map(d=>`   ${d}`)]),"",`合計：${money(cartTotal())}`,`備註：${el.orderNote.value.trim()||"無"}`,"","※ 此為前台測試內容，尚未送入 POS。"];
-state.lastOrderText=lines.join("\n");el.orderResultText.textContent=state.lastOrderText;closeCheckout();showModal(el.orderResultModal)}
+async function submitTestOrder(e){
+ e.preventDefault();
+ const submitBtn=e.submitter||el.checkoutForm.querySelector('[type="submit"]');
+ const name=el.customerName.value.trim(),phone=normalizePhone(el.customerPhone.value);
+ if(!name)return toast("請輸入取餐姓名"); if(!/^09\d{8}$/.test(phone))return toast("請輸入正確的手機號碼"); if(!state.cart.length)return toast("購物車是空的");
+ await refreshPosStatus(true); const blocked=validateCartAvailability(); if(blocked.length)return toast(`${blocked.map(categoryName).join("、")}已停止接單，訂單無法送出`);
+ const clientOrderId=`BH${Date.now()}-${Math.random().toString(36).slice(2,8).toUpperCase()}`;
+ const payload={api:"online_order_submit",clientOrderId,customerName:name,phone,pickupTime:el.pickupTime.value,note:el.orderNote.value.trim(),lineUserId:state.profile?.userId||"",items:state.cart.map(x=>({productId:x.productId,name:x.name,qty:x.qty,unit:x.unit,detail:x.detail,categoryKey:x.categoryKey||categoryKey(x)}))};
+ if(submitBtn){submitBtn.disabled=true;submitBtn.dataset.oldText=submitBtn.textContent;submitBtn.textContent="訂單送出中…"}
+ try{
+   const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),15000);
+   const r=await fetch(cfg.ORDER_SUBMIT_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload),signal:ctrl.signal,redirect:"follow"}); clearTimeout(timer);
+   const result=await r.json(); if(!result.ok)throw new Error(result.message||"送單失敗");
+   const orderNo=result.orderId||clientOrderId,pickup=new Date(el.pickupTime.value);
+   const lines=[`【黑心地瓜球｜線上訂單】`,`訂單編號：${orderNo}`,`取餐姓名：${name}`,`電話：${phone}`,`取餐時間：${pickup.toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit",hour12:false})}`,"",...state.cart.flatMap((x,i)=>[`${i+1}. ${x.name} ×${x.qty}　${money(x.unit*x.qty)}`,...x.detail.map(d=>`   ${d}`)]),"",`合計：${money(cartTotal())}`,`備註：${el.orderNote.value.trim()||"無"}`,"","✅ 訂單已送達店家系統，請留意店家確認。"];
+   state.lastOrderText=lines.join("\n"); el.orderResultText.textContent=state.lastOrderText; state.cart=[];renderCart();closeCheckout();showModal(el.orderResultModal);
+ }catch(err){console.error(err);toast(err.name==="AbortError"?"送單逾時，請稍後再試；請勿連續重送":"送單失敗："+(err.message||err))}
+ finally{if(submitBtn){submitBtn.disabled=false;submitBtn.textContent=submitBtn.dataset.oldText||"送出訂單"}}
+}
 async function copyOrder(){try{await navigator.clipboard.writeText(state.lastOrderText);toast("訂單內容已複製")}catch{toast("無法自動複製，請長按文字複製")}}
 async function loadCatalog(){try{const r=await fetch(cfg.PRODUCTS_URL||"./products.json",{cache:"no-store"});if(!r.ok)throw new Error(`HTTP ${r.status}`);state.catalog=await r.json();buildCatalog(state.catalog)}catch(e){console.error(e);el.productList.innerHTML='<div class="empty-state">商品資料載入失敗，請重新整理。</div>';toast("商品資料載入失敗")}}
 async function initLine(){const id=String(cfg.LIFF_ID||"").trim();if(!id){el.loginHint.textContent="尚未填入 LIFF ID；目前可先預覽完整點餐流程。";return}if(!window.liff){el.loginHint.textContent="LINE 登入元件載入失敗，請重新整理。";return}try{await liff.init({liffId:id});if(liff.isLoggedIn()){state.profile=await liff.getProfile();el.loginPanel.classList.add("hidden");el.memberPanel.classList.remove("hidden");el.memberName.textContent=state.profile.displayName||"LINE 使用者";if(state.profile.pictureUrl)el.memberPicture.src=state.profile.pictureUrl;else el.memberPicture.classList.add("hidden")}}catch(e){console.error(e);el.loginHint.textContent="LINE 登入初始化失敗，請檢查 LIFF ID 與 Endpoint URL。"}}

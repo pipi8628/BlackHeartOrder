@@ -8,6 +8,7 @@ window.BLACK_HEART_CONFIG={
   // 留空時會使用下方測試開關；填入後網頁每 10 秒自動同步。
   POS_STATUS_URL:"https://script.google.com/macros/s/AKfycby10ESbwBKuVICp1X2lWBY1RVRnduf0DxEGMkof19zC-leFEx-_-mZE7IRt3ckbQRxV/exec?api=order_status",
   POS_STATUS_POLL_MS:10000,
+  ORDER_SUBMIT_URL:"https://script.google.com/macros/s/AKfycby10ESbwBKuVICp1X2lWBY1RVRnduf0DxEGMkof19zC-leFEx-_-mZE7IRt3ckbQRxV/exec",
   ENABLE_TEST_SWITCHES:false,
 
   HIDDEN_PRODUCT_KEYWORDS:["老闆招待","隱藏版"],
