@@ -8,3 +8,11 @@
 /* V3.1：目前訂單狀態提高對比，避免黃色文字在淺色底看不清楚 */
 .current-order-panel strong,.my-order-card strong{color:#171717!important;text-shadow:none!important}
 .current-order-panel{color:#171717}
+
+/* V3.4 訂單狀態可讀性與取消提示 */
+.order-status-large{background:#f4f4f4!important;color:#171717!important;text-shadow:none!important;border:1px solid #ddd}
+.order-note,.order-time-note{background:#f4f4f4!important;color:#171717!important;text-shadow:none!important;border:1px solid #ddd}
+.cancel-policy-note{margin:12px 0;padding:12px 14px;border-radius:14px;background:#fff1bd;color:#171717;font-weight:800;line-height:1.55;border:1px solid #e7bd35}
+.order-detail-sheet .cart-summary,.order-detail-sheet .order-detail-meta,.order-detail-sheet .order-detail-items{color:#f7f0dc}
+.order-detail-sheet .order-detail-items small{color:#c9c2b3;opacity:1}
+.primary-btn:disabled{opacity:.65;cursor:not-allowed}
