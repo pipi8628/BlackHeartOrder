@@ -1,9 +1,145 @@
-{
-  "ok": true,
-  "orderStatus": {
-    "balls": true,
-    "drinks": true,
-    "meals": false
-  },
-  "updatedAt": "2026-07-31T15:30:00+08:00"
-}
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0d0d0d">
+  <meta name="description" content="黑心地瓜球線上預訂">
+  <title>黑心地瓜球｜線上預訂</title>
+  <link rel="stylesheet" href="./css/style.css?v=2.2.0">
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body>
+  <main class="app-shell">
+    <header class="hero">
+      <div class="brand-mark" aria-hidden="true">🍠</div>
+      <p class="eyebrow">BLACK HEART</p>
+      <h1>黑心地瓜球</h1>
+      <p class="subtitle">審計新村・線上預訂</p>
+      <div class="brand-copy" aria-label="品牌介紹">
+        <p>🍠 現點現炸，請耐心等候美味出爐。</p>
+        <p>🔥 每一份皆為現炸，預估等候約 10–12 分鐘。</p>
+        <p>🖤 招牌黑色外皮，外酥內 Q，每一口都是現炸的美味。</p>
+        <p>❤️ 感謝您的耐心等候，讓我們為您炸出最好吃的地瓜球。</p>
+      </div>
+    </header>
+
+    <section class="status-card" aria-live="polite">
+      <div class="status-row"><span id="statusDot" class="status-dot"></span><strong id="storeStatus">今日營業中</strong></div>
+      <div class="wait-time"><span>目前預估等待</span><strong id="waitMinutes">約 10–12 分鐘</strong></div>
+      <p id="storeNotice">送出訂單後，需等店家確認才算成立。</p>
+    </section>
+
+    <section id="loginPanel" class="login-card">
+      <div><p class="section-label">開始點餐前</p><h2>請先使用 LINE 登入</h2><p>登入後才能正式送出訂單；目前可先預覽完整菜單與購物車。</p></div>
+      <button id="lineLoginBtn" class="primary-btn" type="button">使用 LINE 登入</button>
+      <button id="previewBtn" class="ghost-btn" type="button">先預覽菜單</button>
+      <p id="loginHint" class="hint">正式送單仍需 LINE 登入。</p>
+    </section>
+
+    <section id="memberPanel" class="member-card hidden">
+      <div class="member-main"><img id="memberPicture" class="avatar" alt="LINE 頭像"><div><p class="section-label">歡迎回來</p><h2 id="memberName">LINE 使用者</h2></div></div>
+      <div class="member-actions">
+        <button id="startOrderBtn" class="primary-btn" type="button">開始點餐</button>
+        <button id="myOrdersBtn" class="ghost-btn order-history-btn" type="button">📋 我的訂單 <span id="activeOrderBadge" class="order-badge hidden">0</span></button>
+      </div>
+    </section>
+
+    <section id="currentOrderCard" class="current-order-card hidden" aria-live="polite">
+      <div class="current-order-head"><div><p class="section-label">CURRENT ORDER</p><h2>📦 目前訂單</h2></div><span id="currentOrderStatus" class="order-status status-new">等待接單</span></div>
+      <div id="currentOrderSummary" class="current-order-summary"></div>
+      <button id="viewCurrentOrderBtn" class="primary-btn" type="button">查看訂單</button>
+    </section>
+
+    <section id="testControls" class="test-controls" aria-label="接單狀態測試開關">
+      <div><p class="section-label">TEST MODE</p><h2>分類接單測試</h2><p>目前尚未連接 POS，可先切換三類狀態確認前台畫面與購物車阻擋。</p></div>
+      <div class="test-switch-grid">
+        <label><span>🍠 地瓜球</span><input id="testBalls" type="checkbox"><i></i></label>
+        <label><span>🥤 飲料</span><input id="testDrinks" type="checkbox"><i></i></label>
+        <label><span>🍱 餐點</span><input id="testMeals" type="checkbox"><i></i></label>
+      </div>
+    </section>
+
+    <section id="menuSection" class="menu-section hidden">
+      <div class="menu-heading"><div><p class="section-label">MENU</p><h2>選擇餐點</h2></div><span id="catalogMeta" class="catalog-meta"></span></div>
+      <nav id="categoryTabs" class="category-tabs" aria-label="商品分類"></nav>
+      <div id="productList" class="product-list"></div>
+    </section>
+
+    <footer><p>台中西區・審計新村商圈</p><p class="fine-print">未經店家確認之訂單不成立。</p></footer>
+  </main>
+
+  <button id="cartBar" class="cart-bar hidden" type="button"><span><b id="cartCount">0</b> 項餐點</span><strong id="cartTotal">NT$0</strong><em>查看購物車</em></button>
+
+  <div id="productModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-backdrop" data-close-modal></div>
+    <section class="modal-sheet">
+      <div class="sheet-handle"></div>
+      <button class="modal-close" type="button" data-close-modal aria-label="關閉">×</button>
+      <div id="modalContent"></div>
+    </section>
+  </div>
+
+  <div id="cartModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="cartTitle">
+    <div class="modal-backdrop" data-close-cart></div>
+    <section class="modal-sheet cart-sheet">
+      <div class="sheet-handle"></div><button class="modal-close" type="button" data-close-cart aria-label="關閉">×</button>
+      <div class="cart-title-row"><h2 id="cartTitle">購物車</h2><button id="clearCartBtn" class="clear-cart-btn" type="button">清空購物車</button></div><div id="cartItems"></div>
+      <div class="cart-summary"><span>合計</span><strong id="cartModalTotal">NT$0</strong></div>
+      <button id="checkoutBtn" class="primary-btn" type="button">下一步</button>
+      <p class="hint">送出後仍需店家確認，訂單才算成立。</p>
+    </section>
+  </div>
+
+  <div id="checkoutModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="checkoutTitle">
+    <div class="modal-backdrop" data-close-checkout></div>
+    <section class="modal-sheet checkout-sheet">
+      <div class="sheet-handle"></div><button class="modal-close" type="button" data-close-checkout aria-label="關閉">×</button>
+      <p class="section-label">ORDER</p><h2 id="checkoutTitle">確認預訂資料</h2>
+      <form id="checkoutForm" novalidate>
+        <label class="field-label">取餐姓名<input id="customerName" class="text-field" maxlength="20" autocomplete="name" placeholder="請輸入姓名" required></label>
+        <label class="field-label">聯絡電話<input id="customerPhone" class="text-field" inputmode="tel" maxlength="15" autocomplete="tel" placeholder="例如 0912345678" required></label>
+        <label class="field-label">預計取餐時間<select id="pickupTime" class="text-field" required></select></label>
+        <label class="field-label">訂單備註（選填）<textarea id="orderNote" class="text-field" rows="3" maxlength="100" placeholder="例如：到店後再炸、餐點一起取"></textarea></label>
+        <div class="checkout-total"><span>訂單金額</span><strong id="checkoutTotal">NT$0</strong></div>
+        <button id="submitOrderBtn" class="primary-btn" type="submit">建立測試訂單</button>
+        <p class="hint">此版本先完成前台流程，尚未傳入 POS。</p>
+      </form>
+    </section>
+  </div>
+
+  <div id="orderResultModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="orderResultTitle">
+    <div class="modal-backdrop" data-close-result></div>
+    <section class="modal-sheet result-sheet">
+      <div class="sheet-handle"></div><button class="modal-close" type="button" data-close-result aria-label="關閉">×</button>
+      <div class="success-mark">✓</div><p class="section-label">TEST ORDER</p><h2 id="orderResultTitle">測試訂單已建立</h2>
+      <p class="result-warning">目前尚未送進 POS，請勿視為正式訂單。</p>
+      <pre id="orderResultText" class="order-result"></pre>
+      <button id="copyOrderBtn" class="primary-btn" type="button">複製訂單內容</button>
+      <button id="viewSubmittedOrderBtn" class="primary-btn" type="button">查看我的訂單</button>
+      <button id="continueOrderBtn" class="ghost-btn" type="button">返回菜單</button>
+    </section>
+  </div>
+
+
+  <div id="ordersModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="ordersTitle">
+    <div class="modal-backdrop" data-close-orders></div>
+    <section class="modal-sheet orders-sheet">
+      <div class="sheet-handle"></div><button class="modal-close" type="button" data-close-orders aria-label="關閉">×</button>
+      <div class="orders-title-row"><div><p class="section-label">ORDER HISTORY</p><h2 id="ordersTitle">我的訂單</h2></div><button id="refreshOrdersBtn" class="refresh-orders-btn" type="button">重新整理</button></div>
+      <p class="orders-note">顯示最近 3 天的訂單，未完成訂單會排在最上方。</p>
+      <div id="ordersList" class="orders-list"><div class="empty-state">訂單載入中…</div></div>
+    </section>
+  </div>
+
+  <div id="orderDetailModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="orderDetailTitle">
+    <div class="modal-backdrop" data-close-order-detail></div>
+    <section class="modal-sheet order-detail-sheet">
+      <div class="sheet-handle"></div><button class="modal-close" type="button" data-close-order-detail aria-label="關閉">×</button>
+      <div id="orderDetailContent"></div>
+    </section>
+  </div>
+
+  <div id="toast" class="toast hidden" role="status"></div>
+  <script src="./js/config.js?v=2.2.0"></script><script src="./js/app.js?v=2.2.0"></script>
+</body></html>

@@ -1,66 +1,9 @@
-# BlackHeartOrder V1.2
-
-可直接部署到 GitHub Pages 的前端測試版。
-
-## 已完成
-- 讀取 POS 匯出的 products.json
-- 自動隱藏「老闆招待」與「隱藏版」
-- 地瓜球整合為單一商品
-- 最多選兩種口味，價格取最高價
-- 飲料尺寸／甜度／冰量／加料
-- 購物車增減、刪除、編輯
-- 購物車自動保留在瀏覽器
-- 取餐姓名、電話、時間與備註
-- 建立並複製測試訂單內容
-
-## 尚未完成
-- 正式 LINE Login 設定（需填入 LIFF ID）
-- 訂單 API
-- POS 自動接單與列印
-
-## 部署
-將壓縮檔內全部檔案放在 GitHub repo 根目錄，不要多包一層資料夾。
-
-## V1.3 分類接單控制測試版（2026-07-31）
-
-- 前台分類統一為：地瓜球／飲料／餐點。
-- 沒有商品的分類會自動隱藏（目前餐點無商品，因此不顯示於菜單）。
-- 三類可獨立開放或停止接單。
-- 停止接單時商品會變灰，且不能加入購物車。
-- 商品加入購物車後若分類停止接單，購物車會標示並阻止進入結帳。
-- 送出測試訂單前會再次檢查分類狀態。
-- `js/config.js` 已預留 `ORDER_STATUS`、`POS_STATUS_URL` 欄位。
-- 測試期間可使用頁面上的三個開關；狀態會保存在瀏覽器 localStorage。
-- 正式接 POS 後可將 `ENABLE_TEST_SWITCHES` 改為 `false` 隱藏測試區。
-
-
-## V1.4.1
-- 修正青花椒鹽粉缺少辣度選項：正常辣／中辣／大辣（必選，預設正常辣）。
-
-## V1.5 POS 狀態 API 連動
-
-1. 在 `js/config.js` 的 `POS_STATUS_URL` 填入公開 GET API 網址。
-2. 網頁會依 `POS_STATUS_POLL_MS`（預設 10 秒）自動同步。
-3. API 啟用後，前台測試開關會自動隱藏。
-4. 進入結帳與送出訂單前，會強制再抓一次最新狀態。
-5. API 暫時失敗時保留最後一次成功狀態，不會把全部分類誤關閉。
-
-支援回傳格式：
-
-```json
 {
   "ok": true,
   "orderStatus": {
     "balls": true,
-    "drinks": false,
-    "meals": true
+    "drinks": true,
+    "meals": false
   },
   "updatedAt": "2026-07-31T15:30:00+08:00"
 }
-```
-
-此 ZIP 內附：
-- `pos_status_example.json`
-- `POS狀態API_AppsScript範例.gs`
-
-POS 三顆按鈕需要在 POS 專案內以 POST 呼叫 API；必須取得目前 POS 最新原始碼後才能完成該端寫入。
