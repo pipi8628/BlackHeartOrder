@@ -1,5 +1,7 @@
 window.BLACK_HEART_CONFIG={
+  // 可直接填 LIFF ID；留空時會從 Apps Script 的 public_config 自動讀取。
   LIFF_ID:"",
+  PUBLIC_CONFIG_URL:"https://script.google.com/macros/s/AKfycby10ESbwBKuVICp1X2lWBY1RVRnduf0DxEGMkof19zC-leFEx-_-mZE7IRt3ckbQRxV/exec?api=public_config",
   PRODUCTS_URL:"./products.json",
   STORE:{isOpen:true,statusText:"今日營業中",waitText:"約 10–12 分鐘",notice:"送出訂單後，需等店家確認才算成立。"},
   ORDER_STATUS:{balls:true,drinks:true,meals:false},
