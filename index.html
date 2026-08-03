@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0d0d0d">
   <meta name="description" content="黑心地瓜球線上預訂">
   <title>黑心地瓜球｜線上預訂</title>
-  <link rel="stylesheet" href="./css/style.css?v=2.0.2">
+  <link rel="stylesheet" href="./css/style.css?v=2.3.0">
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
 <body>
@@ -40,6 +40,13 @@
     <section id="memberPanel" class="member-card hidden">
       <div class="member-main"><img id="memberPicture" class="avatar" alt="LINE 頭像"><div><p class="section-label">歡迎回來</p><h2 id="memberName">LINE 使用者</h2></div></div>
       <button id="startOrderBtn" class="primary-btn" type="button">開始點餐</button>
+      <button id="myOrdersBtn" class="ghost-btn my-orders-entry" type="button">📋 我的訂單 <span id="myOrdersBadge" class="order-badge hidden">0</span></button>
+    </section>
+
+    <section id="currentOrderCard" class="current-order-card hidden" aria-live="polite">
+      <div class="current-order-head"><div><p class="section-label">CURRENT ORDER</p><h2>📦 目前訂單</h2></div><span id="currentOrderStatus" class="order-status-chip">等待接單</span></div>
+      <div id="currentOrderSummary" class="current-order-summary"></div>
+      <button id="currentOrderBtn" class="primary-btn" type="button">查看訂單</button>
     </section>
 
     <section id="testControls" class="test-controls" aria-label="接單狀態測試開關">
@@ -93,8 +100,8 @@
         <label class="field-label">預計取餐時間<select id="pickupTime" class="text-field" required></select></label>
         <label class="field-label">訂單備註（選填）<textarea id="orderNote" class="text-field" rows="3" maxlength="100" placeholder="例如：到店後再炸、餐點一起取"></textarea></label>
         <div class="checkout-total"><span>訂單金額</span><strong id="checkoutTotal">NT$0</strong></div>
-        <button id="submitOrderBtn" class="primary-btn" type="submit">建立測試訂單</button>
-        <p class="hint">此版本先完成前台流程，尚未傳入 POS。</p>
+        <button id="submitOrderBtn" class="primary-btn" type="submit">送出訂單</button>
+        <p class="hint">送出後需等待店家接單確認。</p>
       </form>
     </section>
   </div>
@@ -103,14 +110,32 @@
     <div class="modal-backdrop" data-close-result></div>
     <section class="modal-sheet result-sheet">
       <div class="sheet-handle"></div><button class="modal-close" type="button" data-close-result aria-label="關閉">×</button>
-      <div class="success-mark">✓</div><p class="section-label">TEST ORDER</p><h2 id="orderResultTitle">測試訂單已建立</h2>
-      <p class="result-warning">目前尚未送進 POS，請勿視為正式訂單。</p>
+      <div class="success-mark">✓</div><p class="section-label">ORDER SENT</p><h2 id="orderResultTitle">訂單已送出</h2>
+      <p class="result-warning">訂單已送達店家，請在「我的訂單」查看接單狀態。</p>
       <pre id="orderResultText" class="order-result"></pre>
       <button id="copyOrderBtn" class="primary-btn" type="button">複製訂單內容</button>
       <button id="continueOrderBtn" class="ghost-btn" type="button">返回菜單</button>
     </section>
   </div>
 
+
+  <div id="myOrdersModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="myOrdersTitle">
+    <div class="modal-backdrop" data-close-my-orders></div>
+    <section class="modal-sheet my-orders-sheet">
+      <div class="sheet-handle"></div><button class="modal-close" type="button" data-close-my-orders aria-label="關閉">×</button>
+      <div class="my-orders-title-row"><div><p class="section-label">MY ORDERS</p><h2 id="myOrdersTitle">我的訂單</h2><p>最近 3 天，未完成訂單優先顯示。</p></div><button id="refreshMyOrdersBtn" class="small-refresh-btn" type="button">重新整理</button></div>
+      <div id="myOrdersList" class="my-orders-list"><div class="empty-state">讀取中…</div></div>
+    </section>
+  </div>
+
+  <div id="orderDetailModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="orderDetailTitle">
+    <div class="modal-backdrop" data-close-order-detail></div>
+    <section class="modal-sheet order-detail-sheet">
+      <div class="sheet-handle"></div><button class="modal-close" type="button" data-close-order-detail aria-label="關閉">×</button>
+      <div id="orderDetailContent"></div>
+    </section>
+  </div>
+
   <div id="toast" class="toast hidden" role="status"></div>
-  <script src="./js/config.js?v=2.0.2"></script><script src="./js/app.js?v=2.0.2"></script>
+  <script src="./js/config.js?v=2.3.0"></script><script src="./js/app.js?v=2.3.0"></script>
 </body></html>
