@@ -9,8 +9,6 @@ window.BLACK_HEART_CONFIG={
   POS_STATUS_URL:"https://script.google.com/macros/s/AKfycby10ESbwBKuVICp1X2lWBY1RVRnduf0DxEGMkof19zC-leFEx-_-mZE7IRt3ckbQRxV/exec?api=order_status",
   POS_STATUS_POLL_MS:10000,
   ORDER_SUBMIT_URL:"https://script.google.com/macros/s/AKfycby10ESbwBKuVICp1X2lWBY1RVRnduf0DxEGMkof19zC-leFEx-_-mZE7IRt3ckbQRxV/exec",
-  MY_ORDERS_URL:"https://script.google.com/macros/s/AKfycby10ESbwBKuVICp1X2lWBY1RVRnduf0DxEGMkof19zC-leFEx-_-mZE7IRt3ckbQRxV/exec",
-  MY_ORDERS_POLL_MS:15000,
   ENABLE_TEST_SWITCHES:false,
 
   HIDDEN_PRODUCT_KEYWORDS:["老闆招待","隱藏版"],
