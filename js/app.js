@@ -137,17 +137,31 @@ async function copyOrder(){try{await navigator.clipboard.writeText(state.lastOrd
 async function loadCatalog(){try{const r=await fetch(cfg.PRODUCTS_URL||"./products.json",{cache:"no-store"});if(!r.ok)throw new Error(`HTTP ${r.status}`);state.catalog=await r.json();buildCatalog(state.catalog)}catch(e){console.error(e);el.productList.innerHTML='<div class="empty-state">商品資料載入失敗，請重新整理。</div>';toast("商品資料載入失敗")}}
 async function initLine(){el.loginHint.textContent="正在載入 LINE 登入設定…";const id=await resolveLiffId();if(!id){el.loginHint.textContent="尚未設定 LIFF ID；請在 Apps Script 指令碼屬性填入 BLACKHEART_LIFF_ID。";return}if(!window.liff){el.loginHint.textContent="LINE 登入元件載入失敗，請重新整理。";return}try{await liff.init({liffId:id});if(liff.isLoggedIn()){state.profile=await liff.getProfile();el.loginPanel.classList.add("hidden");el.memberPanel.classList.remove("hidden");el.memberName.textContent=state.profile.displayName||"LINE 使用者";if(state.profile.pictureUrl)el.memberPicture.src=state.profile.pictureUrl;else el.memberPicture.classList.add("hidden");if(el.myOrdersBtn)el.myOrdersBtn.classList.remove("hidden");state.myOrders=mergeOrders([],loadLocalOrders());renderMyOrders();await loadMyOrders(true);startMyOrdersPolling()}else{el.loginHint.textContent="請使用 LINE 登入後送出訂單與查看訂單紀錄。"}}catch(e){console.error(e);el.loginHint.textContent="LINE 登入初始化失敗，請確認 LIFF Endpoint URL 為目前 GitHub Pages 網址。"}}
 
-const ORDER_STATUS_META={NEW:['🟡','等待店家接單'],ACCEPTED:['🟢','店家已接單'],READY:['✅','可以取餐'],CHECKOUT:['💰','櫃台結帳中'],PAID:['✔','已付款完成'],REJECTED:['🔴','店家未接單'],CANCELLED:['⚫','已取消'],RELEASED:['✅','可以取餐']};
+const ORDER_STATUS_META={NEW:['🟡','等待店家接單'],ACCEPTED:['🟢','店家已接單'],READY:['✅','可以取餐'],CHECKOUT:['💰','櫃台結帳中'],PAID:['✔','已付款完成'],REJECTED:['🔴','店家未接單'],CANCELLED:['⚫','已取消'],RELEASED:['✅','可以取餐'],DELETED:['🗑','已刪除']};
 function orderStatusMeta(s){return ORDER_STATUS_META[String(s||'NEW').toUpperCase()]||['•',String(s||'未知狀態')]}
 function orderActive(s){return ['NEW','ACCEPTED','READY','CHECKOUT','RELEASED'].includes(String(s||'').toUpperCase())}
-function canCancelAdjusted(o){return String(o.status||'').toUpperCase()==='ACCEPTED'&&o.pickupAdjusted&&o.cancelUntil&&Date.now()<new Date(o.cancelUntil).getTime()}
+function canCancelOrder(o){return String(o.status||'').toUpperCase()==='ACCEPTED'&&o.cancelUntil&&Date.now()<new Date(o.cancelUntil).getTime()}
 function cancelSeconds(o){return Math.max(0,Math.ceil((new Date(o.cancelUntil).getTime()-Date.now())/1000))}
-async function cancelAdjustedOrder(id){
- const o=state.myOrders.find(x=>String(x.orderId)===String(id));if(!o||!canCancelAdjusted(o))return toast('取消時間已結束');if(state.cancelBusyId)return;
- if(!confirm('確定時間無法配合，要取消這張訂單？取消後 10 分鐘內無法再次下單。'))return;
- state.cancelBusyId=String(id);const btn=document.getElementById('cancelAdjustedOrderBtn');if(btn){btn.disabled=true;btn.textContent='取消處理中…'}
- o.status='CANCELLED';renderMyOrders();openOrderDetail(id);
- try{const token=liff.getAccessToken();const r=await fetch(String(cfg.ORDER_SUBMIT_URL||''),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({api:'online_order_cancel',accessToken:token,orderId:id})});const d=await r.json();if(!d.ok)throw new Error(d.message||'取消失敗');state.cooldownUntil=d.cooldownUntil?new Date(d.cooldownUntil).getTime():Date.now()+10*60000;o.status='CANCELLED';o.cooldownUntil=d.cooldownUntil||new Date(state.cooldownUntil).toISOString();rememberLocalOrder(o);renderMyOrders();toast('訂單已取消，10 分鐘後可再次下單');closeOrderDetail();setTimeout(()=>loadMyOrders(true),300)}catch(e){o.status='ACCEPTED';renderMyOrders();toast(e.message||'取消失敗');openOrderDetail(id)}finally{state.cancelBusyId=''}
+async function cancelOrderByCustomer(id){
+ const o=state.myOrders.find(x=>String(x.orderId)===String(id));if(!o||!canCancelOrder(o))return toast('取消時間已結束');if(state.cancelBusyId)return;
+ const adjusted=!!o.pickupAdjusted;
+ const confirmText=adjusted
+   ? '店家已調整取餐時間，確定無法配合並取消這張訂單？本次不會鎖定點餐。'
+   : '店家已接受原取餐時間，確定仍要取消？取消後 10 分鐘內無法再次下單。';
+ if(!confirm(confirmText))return;
+ state.cancelBusyId=String(id);const btn=document.getElementById('cancelOrderBtn');if(btn){btn.disabled=true;btn.textContent='取消處理中…'}
+ const oldStatus=o.status;o.status='CANCELLED';renderMyOrders();openOrderDetail(id);
+ try{
+   const token=liff.getAccessToken();
+   const r=await fetch(String(cfg.ORDER_SUBMIT_URL||''),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({api:'online_order_cancel',accessToken:token,orderId:id})});
+   const d=await r.json();if(!d.ok)throw new Error(d.message||'取消失敗');
+   o.status='CANCELLED';o.cooldownUntil=d.cooldownUntil||'';o.cancelReason=d.cancelReason||'';
+   state.cooldownUntil=d.cooldownUntil?new Date(d.cooldownUntil).getTime():0;
+   rememberLocalOrder(o);renderMyOrders();
+   if(d.locked)toast(`訂單已取消，10 分鐘後可再次下單${Number(d.recentCancelCount||0)>=3?'（30 分鐘內已取消 3 筆）':''}`);
+   else toast('訂單已取消，本次不限制再次點餐');
+   closeOrderDetail();setTimeout(()=>loadMyOrders(true),300);
+ }catch(e){o.status=oldStatus;renderMyOrders();toast(e.message||'取消失敗');openOrderDetail(id)}finally{state.cancelBusyId=''}
 }
 function shortOrderId(id){const s=String(id||'');return '#'+(s.includes('-')?s.split('-').pop():s.slice(-6))}
 function orderTimeText(v){const d=new Date(v);return isNaN(d)?String(v||''):d.toLocaleString('zh-TW',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false})}
@@ -161,7 +175,7 @@ async function loadMyOrders(silent=false){
    const token=liff.getAccessToken();if(!token)throw new Error('LINE 登入已失效');
    const res=await fetch(String(cfg.ORDER_SUBMIT_URL||""),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({api:'my_orders',accessToken:token,days:3})});
    const d=await res.json();if(!d.ok)throw new Error(d.message||'讀取訂單失敗');
-   state.myOrders=mergeOrders(Array.isArray(d.orders)?d.orders:[],local);saveLocalOrders(state.myOrders);renderMyOrders();
+   state.myOrders=mergeOrders((Array.isArray(d.orders)?d.orders:[]).filter(o=>String(o.status||'').toUpperCase()!=='DELETED'),[]);saveLocalOrders(state.myOrders);renderMyOrders();
  }catch(e){
    console.error('我的訂單讀取失敗',e);state.myOrders=mergeOrders([],local);renderMyOrders(e.message||'目前無法連線讀取訂單');if(!silent)toast(e.message||'目前無法讀取訂單紀錄');
  }finally{state.myOrdersBusy=false}
@@ -169,16 +183,16 @@ async function loadMyOrders(silent=false){
 function startMyOrdersPolling(){clearInterval(state.myOrdersTimer);state.myOrdersTimer=setInterval(()=>{if(document.visibilityState==='visible')loadMyOrders(true)},15000)}
 function renderMyOrders(errorMessage=""){
  const active=state.myOrders.filter(o=>orderActive(o.status));if(el.myOrdersBadge)el.myOrdersBadge.textContent=active.length?' '+active.length:'';
- if(el.currentOrderPanel){if(!active.length){el.currentOrderPanel.classList.add('hidden');el.currentOrderPanel.innerHTML=''}else{const o=active[0],m=orderStatusMeta(o.status),cancel=canCancelAdjusted(o);el.currentOrderPanel.classList.remove('hidden');el.currentOrderPanel.innerHTML=`<button type="button" class="current-order-float-btn" data-current-order aria-label="查看目前訂單"><span>📦 ${esc(shortOrderId(o.orderId))}</span><b>${m[0]} ${esc(m[1])}</b>${cancel?`<small>${cancelSeconds(o)} 秒內可取消</small>`:''}</button>`;el.currentOrderPanel.querySelector('[data-current-order]').onclick=()=>openOrderDetail(o.orderId)}}
+ if(el.currentOrderPanel){if(!active.length){el.currentOrderPanel.classList.add('hidden');el.currentOrderPanel.innerHTML=''}else{const o=active[0],m=orderStatusMeta(o.status),cancel=canCancelOrder(o);el.currentOrderPanel.classList.remove('hidden');el.currentOrderPanel.innerHTML=`<button type="button" class="current-order-float-btn" data-current-order aria-label="查看目前訂單"><span>📦 ${esc(shortOrderId(o.orderId))}</span><b>${m[0]} ${esc(m[1])}</b>${cancel?`<small>${cancelSeconds(o)} 秒內可取消</small>`:''}</button>`;el.currentOrderPanel.querySelector('[data-current-order]').onclick=()=>openOrderDetail(o.orderId)}}
  if(!el.myOrdersList)return;el.myOrdersList.innerHTML=state.myOrders.length?state.myOrders.map(o=>{const m=orderStatusMeta(o.status);return `<button class="my-order-card" type="button" data-order-id="${esc(o.orderId)}"><span><b>${esc(shortOrderId(o.orderId))}</b><small>${esc(orderTimeText(o.createdAt))}｜取餐 ${esc(orderPickupText(o.pickupTime))}</small></span><strong>${m[0]} ${esc(m[1])}</strong><em>${money(o.total)}</em></button>`}).join(''):`<div class="empty-state">${errorMessage?`雲端訂單讀取失敗：${esc(errorMessage)}<br>仍可查看此手機剛送出的訂單`:'最近 3 天沒有訂單'}</div>`;el.myOrdersList.querySelectorAll('[data-order-id]').forEach(b=>b.onclick=()=>openOrderDetail(b.dataset.orderId));
 }
 function openMyOrders(){renderMyOrders();showModal(el.myOrdersModal);loadMyOrders(true)}
 function closeMyOrders(){hideModal(el.myOrdersModal)}
 function closeOrderDetail(){hideModal(el.orderDetailModal)}
 function openOrderDetail(id){
- const o=state.myOrders.find(x=>String(x.orderId)===String(id));if(!o)return;const m=orderStatusMeta(o.status),items=Array.isArray(o.items)?o.items:[],cancel=canCancelAdjusted(o),adjustNotice=o.pickupAdjusted&&String(o.status).toUpperCase()==='ACCEPTED';
- el.orderDetailContent.innerHTML=`<p class="section-label">ORDER DETAIL</p><h2>${esc(shortOrderId(o.orderId))}</h2><div class="order-status-large">${m[0]} ${esc(m[1])}</div><div class="order-detail-meta"><span>下單：${esc(orderTimeText(o.createdAt))}</span><span>${o.pickupAdjusted?'店家確認':'取餐'}：${esc(orderPickupText(o.pickupTime))}</span></div>${o.pickupAdjusted?`<p class="order-note order-time-note">原希望時間：${esc(orderPickupText(o.requestedPickupTime||o.pickupTime))}</p>`:''}${adjustNotice?`<p class="cancel-policy-note">店家已調整取餐時間；若無法配合，請於 1 分鐘內取消。取消後 10 分鐘內無法再次下單。</p>`:''}<div class="order-detail-items">${items.map(x=>`<div><span><b>${esc(x.name||'商品')} ×${Number(x.qty||1)}</b><small>${(Array.isArray(x.detail)?x.detail:[]).map(esc).join('／')}</small></span><strong>${money(Number(x.unit||0)*Number(x.qty||1))}</strong></div>`).join('')}</div><div class="cart-summary"><span>合計</span><strong>${money(o.total)}</strong></div>${o.note?`<p class="order-note">備註：${esc(o.note)}</p>`:''}${cancel?`<button id="cancelAdjustedOrderBtn" class="primary-btn" type="button">時間無法配合，取消訂單（${cancelSeconds(o)} 秒）</button>`:''}<div id="orderQrBox" class="order-qr-box ${['ACCEPTED','READY','CHECKOUT','RELEASED'].includes(String(o.status).toUpperCase())?'':'hidden'}"><canvas id="orderQrCanvas"></canvas><b>到店可出示此 QR Code</b><small>也可報訂單短碼 ${esc(shortOrderId(o.orderId))}</small></div>`;
- showModal(el.orderDetailModal);const cb=document.getElementById('cancelAdjustedOrderBtn');if(cb)cb.onclick=()=>cancelAdjustedOrder(o.orderId);setTimeout(()=>{const c=document.getElementById('orderQrCanvas');if(c&&window.QRCode&&o.qrToken)QRCode.toCanvas(c,`BHORDER|${o.orderId}|${o.qrToken}`,{width:210,margin:1}).catch(console.error)},30)
+ const o=state.myOrders.find(x=>String(x.orderId)===String(id));if(!o)return;const m=orderStatusMeta(o.status),items=Array.isArray(o.items)?o.items:[],cancel=canCancelOrder(o);
+ el.orderDetailContent.innerHTML=`<p class="section-label">ORDER DETAIL</p><h2>${esc(shortOrderId(o.orderId))}</h2><div class="order-status-large">${m[0]} ${esc(m[1])}</div><div class="order-detail-meta"><span>下單：${esc(orderTimeText(o.createdAt))}</span><span>${o.pickupAdjusted?'店家確認':'取餐'}：${esc(orderPickupText(o.pickupTime))}</span></div>${o.pickupAdjusted?`<p class="order-note order-time-note">原希望時間：${esc(orderPickupText(o.requestedPickupTime||o.pickupTime))}</p>`:''}${String(o.status).toUpperCase()==='ACCEPTED'?`<p class="cancel-policy-note">${o.pickupAdjusted?'店家已調整取餐時間；若無法配合，請於 1 分鐘內取消。本次取消不會鎖定點餐。':'店家已接受原取餐時間；如仍需取消，請於 1 分鐘內完成。取消後 10 分鐘內無法再次下單。'}</p>`:''}<div class="order-detail-items">${items.map(x=>`<div><span><b>${esc(x.name||'商品')} ×${Number(x.qty||1)}</b><small>${(Array.isArray(x.detail)?x.detail:[]).map(esc).join('／')}</small></span><strong>${money(Number(x.unit||0)*Number(x.qty||1))}</strong></div>`).join('')}</div><div class="cart-summary"><span>合計</span><strong>${money(o.total)}</strong></div>${o.note?`<p class="order-note">備註：${esc(o.note)}</p>`:''}${cancel?`<button id="cancelOrderBtn" class="primary-btn" type="button">${o.pickupAdjusted?'時間無法配合，取消訂單':'取消訂單'}（${cancelSeconds(o)} 秒）</button>`:''}<div id="orderQrBox" class="order-qr-box ${['ACCEPTED','READY','CHECKOUT','RELEASED'].includes(String(o.status).toUpperCase())?'':'hidden'}"><canvas id="orderQrCanvas"></canvas><b>到店可出示此 QR Code</b><small>也可報訂單短碼 ${esc(shortOrderId(o.orderId))}</small></div>`;
+ showModal(el.orderDetailModal);const cb=document.getElementById('cancelOrderBtn');if(cb)cb.onclick=()=>cancelOrderByCustomer(o.orderId);setTimeout(()=>{const c=document.getElementById('orderQrCanvas');if(c&&window.QRCode&&o.qrToken)QRCode.toCanvas(c,`BHORDER|${o.orderId}|${o.qrToken}`,{width:210,margin:1}).catch(console.error)},30)
 }
 el.lineLoginBtn.onclick=async()=>{const id=await resolveLiffId();if(!id)return toast("尚未設定 LIFF ID，請先完成 Apps Script 設定");if(!window.liff)return toast("LINE 登入元件尚未載入");liff.isLoggedIn()?showMenu():liff.login({redirectUri:location.origin+location.pathname})};
 el.previewBtn.onclick=()=>{state.preview=true;showMenu()};el.startOrderBtn.onclick=showMenu;
